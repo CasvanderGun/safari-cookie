@@ -16,6 +16,11 @@ export async function login(formData: FormData) {
 
 export default async function LoginPage() {
 
+  const session = await getSession();
+  if (session.isAuthenticated) {
+    redirect("/protected");
+  }
+
   return (
    <div>
       <form action={login}>

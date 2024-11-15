@@ -9,18 +9,17 @@ async function logout() {
 }
 
 export default async function ProtectedPage() {
-  "use server";
 
   const session = await getSession();
 
-  if (!session) {
+  if (session.isAuthenticated === false) {
     redirect("/login");
   }
 
   return (
     <div>
         <h3>This page is protected. You need to have a valid session cookie to access it.</h3> 
-        <p>Logged in as {session.username}</p>
+        <p>Logged in as {session.session?.username}</p>
 
         <form action={logout}>
           <button type="submit">Logout</button>

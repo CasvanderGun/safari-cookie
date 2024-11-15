@@ -12,20 +12,20 @@ export type SessionData = {
 }
   
 
-export async function getSession(): Promise<SessionData | null> {
-  "use server";
-  console.log("getSession");
+export const getSession = cache(async () => {
 
   const sealedSession = await getSessionCookie();
 
   if (sealedSession) {
     const unsealedSession = await unsealSession(sealedSession);
-    const potentiallyUpdatedSession = await updateSession(unsealedSession);
-    
-    return potentiallyUpdatedSession;
+    const updatedSession = await updateSession(unsealedSession);
+    return { isAuthenticated: true, session: updatedSession }
+  } else {
+    return { isAuthenticated: false, session: null }
   }
-  return null;
-}
+
+})
+
 
 
 export async function createSession(username: string, token: string): Promise<SessionData> {
