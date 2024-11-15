@@ -13,24 +13,25 @@ export type SessionData = {
   
 
 export const getSession = cache(async () => {
+  "use server";
+  console.log("getSession");
 
   const sealedSession = await getSessionCookie();
 
   if (sealedSession) {
     const unsealedSession = await unsealSession(sealedSession);
     const updatedSession = await updateSession(unsealedSession);
-    return { isAuthenticated: true, session: updatedSession }
+    return { isAuthenticated: true, username: updatedSession.username }
   } else {
-    return { isAuthenticated: false, session: null }
+    return { isAuthenticated: false, username: null }
   }
-
 })
 
 
 
-export async function createSession(username: string, token: string): Promise<SessionData> {
+export async function setSession(username: string, token: string): Promise<SessionData> {
   "use server";
-  console.log("createSession");
+  console.log("setSession");
 
   const unsealedSession = {
     username,
@@ -54,7 +55,7 @@ export async function updateSession(unsealedSession: SessionData): Promise<Sessi
   if (Math.random() > 0.5) {
 
     const newToken = Math.random().toString(36).slice(2);
-    const updatedSession = createSession(unsealedSession.username, newToken);
+    const updatedSession = setSession(unsealedSession.username, newToken);
     
     return updatedSession;
   } else {
