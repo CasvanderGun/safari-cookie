@@ -3,6 +3,7 @@
 import { sealSession, unsealSession } from "./seal";
 import { deleteSessionCookie, getSessionCookie, setSessionCookie } from "./cookie";
 import { cache } from "react";
+import { NextRequest, NextResponse } from "next/server";
 
 
 
@@ -20,7 +21,6 @@ export const getSession = cache(async () => {
 
   if (sealedSession) {
     const unsealedSession = await unsealSession(sealedSession);
-    const updatedSession = await updateSession(unsealedSession);
     return { isAuthenticated: true, username: updatedSession.username }
   } else {
     return { isAuthenticated: false, username: null }
@@ -46,22 +46,33 @@ export async function setSession(username: string, token: string): Promise<Sessi
 
 }
 
-export async function updateSession(unsealedSession: SessionData): Promise<SessionData> {
+export async function updateSessionMiddleware(request: NextRequest) {
   "use server";
-  console.log("updateSession");
+  console.log("updateSessionMiddleware");
 
-  // There is a 50% chance the session needs to be updated
-  // Error occurs if this is the case
-  if (Math.random() > 0.5) {
+  const sealedSession = request.cookies.get("session")?.value;
 
-    const newToken = Math.random().toString(36).slice(2);
-    const updatedSession = setSession(unsealedSession.username, newToken);
-    
-    return updatedSession;
-  } else {
-    return unsealedSession;
+  if (sealedSession) {
+    const unsealedSession = await unsealSession(sealedSession);
+
+    if (isTokenExpired(unsealedSession.token)) {
+      const newToken = Math.random().toString(36).slice(2);
+      const updatedSession = setSession(unsealedSession.username, newToken);
+      // Update the session cookie with the new token
+      const response = NextResponse.next();
+      response.cookies.set("session", await sealSession(updatedSession));
+      return response;
+    }
   }
+
+  return NextResponse.next();
 }
+
+function isTokenExpired(token: string): boolean {
+  // Implement your token expiration logic here
+  return false; // Placeholder
+}
+
 
   
 
